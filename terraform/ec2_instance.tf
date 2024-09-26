@@ -1,15 +1,15 @@
-resource "aws_eip" "web_app_eip" {
-  instance = aws_instance.monitoring_instance.id
-  domain   = "vpc"
-  tags = {
-    Name = "web-app-eip"
-  }
-}
+#resource "aws_eip" "web_app_eip" {
+#  instance = aws_instance.monitoring_instance.id
+#  domain   = "vpc"
+#  tags = {
+#    Name = "web-app-eip"
+#  }
+#}
 
-resource "aws_eip_association" "web_app_eip_assoc" {
-  instance_id   = aws_instance.monitoring_instance.id
-  allocation_id = aws_eip.web_app_eip.id
-}
+#resource "aws_eip_association" "web_app_eip_assoc" {
+#  instance_id   = aws_instance.monitoring_instance.id
+#  allocation_id = aws_eip.web_app_eip.id
+#}
 
 resource "aws_instance" "monitoring_instance" {
   ami                    = var.ami_id
