@@ -7,22 +7,31 @@ resource "aws_instance" "monitoring_instance" {
 
   user_data = <<-EOF
     #!/bin/bash
-    yum update -y
-    # Install Docker
-    amazon-linux-extras install docker -y
-    service docker start
-    usermod -a -G docker ec2-user
-    # Install Docker Compose
-    curl -L "https://github.com/docker/compose/releases/download/2.22.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-    chmod +x /usr/local/bin/docker-compose
-    # Clone the repository containing docker-compose.yml
-    yum install -y git
-    cd /home/ec2-user
-    git clone https://github.com/yourusername/yourrepo.git
-    chown -R ec2-user:ec2-user yourrepo
-    cd yourrepo
-    # Start the containers
-    docker-compose up -d
+    # Update the system
+    apt-get update -y
+
+    # Install Git
+    apt-get install -y git
+
+    # Change to the ubuntu user's home directory
+    cd /home/ubuntu
+
+    # Clone the repository
+    git clone https://github.com/Matanmoshes/sre-monitoring-setup.git
+
+    # Change ownership of the cloned repository
+    chown -R ubuntu:ubuntu sre-monitoring-setup
+
+    # Change to the repository directory
+    cd sre-monitoring-setup
+
+    # Ensure the script has execution permissions
+    chmod +x setup.sh
+
+    # Run the script as root
+    bash setup.sh
+
+    
   EOF
 
   tags = {

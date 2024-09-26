@@ -22,10 +22,10 @@ EXPOSE 5000
 ENV FLASK_APP=app.py
 
 # Define build-time argument for the API key
-ARG OPENWEATHER_API_KEY
+#ARG OPENWEATHER_API_KEY
 
 # Set the environment variable in the container using the build-time argument
-ENV OPENWEATHER_API_KEY=${OPENWEATHER_API_KEY}
+ENV OPENWEATHER_API_KEY="e4c833501c79850b85b3f2750d5bb9e3"
 
 # Run the Flask application
 CMD ["flask", "run", "--host=0.0.0.0", "--port=5000"]

@@ -5,10 +5,12 @@ services:
     image: matanm66/weather-app:latest
     container_name: webapp
     ports:
-      - "80:80"
+      - "80:5000"
     restart: unless-stopped
     networks:
       - monitoring
+    #environment:
+      #- API_KEY=${OPENWEATHER_API_KEY}
 
   prometheus:
     image: prom/prometheus:latest

@@ -20,7 +20,7 @@ variable "instance_type" {
 
 variable "ami_id" {
   description = "AMI ID for EC2 instance (Amazon Linux 2)"
-  default     = "ami-0c02fb55956c7d316"  
+  default     = "ami-0e86e20dae9224db8"  # Ubuntu Server 24.04  
 }
 
 variable "key_pair_name" {
