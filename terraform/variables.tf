@@ -23,13 +23,13 @@ variable "ami_id" {
   default     = "ami-0e86e20dae9224db8"  # Ubuntu Server 24.04  
 }
 
-variable "key_pair_name" {
-  description = "Name of the key pair to use for EC2 instance"
-  default     = "26-09-24-key"  
-}
-
 variable "allowed_ip" {
   description = "Your IP address to allow SSH access (in CIDR notation)"
   default     = "0.0.0.0/0"  
+}
+
+variable "key_pair_name" {
+  description = "Name of the key pair to use for EC2 instance"
+  default     = "test-matan-key-tyut"  
 }
 
