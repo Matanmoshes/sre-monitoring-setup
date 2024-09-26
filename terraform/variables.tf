@@ -25,7 +25,7 @@ variable "ami_id" {
 
 variable "key_pair_name" {
   description = "Name of the key pair to use for EC2 instance"
-  default     = "your-key-pair"  
+  default     = "26-09-24-key"  
 }
 
 variable "allowed_ip" {
