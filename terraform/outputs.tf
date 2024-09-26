@@ -1,8 +1,12 @@
-output "alb_dns_name" {
-  description = "DNS name of the ALB"
-  value       = aws_lb.web_app_alb.dns_name
-}
+#output "alb_dns_name" {
+#  description = "DNS name of the ALB"
+#  value       = aws_lb.web_app_alb.dns_name
+#}
 
+output "webapp_url" {
+  description = "Prometheus URL"
+  value       = "http://${aws_eip.web_app_eip.public_ip}:80"
+}
 output "prometheus_url" {
   description = "Prometheus URL"
   value       = "http://${aws_instance.monitoring_instance.public_ip}:9090"
