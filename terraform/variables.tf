@@ -30,6 +30,6 @@ variable "allowed_ip" {
 
 variable "key_pair_name" {
   description = "Name of the key pair to use for EC2 instance"
-  default     = "27-09-24-key"  # change keys
+  default     = "27-09-24-key"  # change keys if needed
 }
 
