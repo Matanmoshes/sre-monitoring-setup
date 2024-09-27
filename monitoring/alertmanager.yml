@@ -1,12 +1,18 @@
 global:
   resolve_timeout: 5m
+  smtp_smarthost: 'smtp.gmail.com:587'
+  smtp_from: 'matanmoshes66@gmail.com'
+  smtp_auth_username: 'matanmoshes66@gmail.com'
+  smtp_auth_password: '{{ env "SMTP_AUTH_PASSWORD" }}'
 
 route:
-  receiver: 'slack-notifications'
+  receiver: 'email-notifications'
+  group_wait: 10s
+  group_interval: 10m
+  repeat_interval: 1h
 
 receivers:
-  - name: 'slack-notifications'
-    slack_configs:
-      - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
-        channel: '#alerts'
+  - name: 'email-notifications'
+    email_configs:
+      - to: 'matanmoshes66@gmail.com'
         send_resolved: true

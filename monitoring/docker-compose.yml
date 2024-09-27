@@ -67,15 +67,17 @@ services:
       - monitoring
 
   alertmanager:
-    image: prom/alertmanager:latest
-    container_name: alertmanager
-    volumes:
-      - ./alertmanager.yml:/etc/alertmanager/config.yml
-    ports:
-      - "9093:9093"
-    restart: unless-stopped
-    networks:
-      - monitoring
+      image: prom/alertmanager:latest
+      container_name: alertmanager
+      volumes:
+        - ./alertmanager.yml:/etc/alertmanager/config.yml
+      ports:
+        - "9093:9093"
+      restart: unless-stopped
+      environment:
+        - SMTP_AUTH_PASSWORD=${SMTP_AUTH_PASSWORD}
+      networks:
+        - monitoring
 
 networks:
   monitoring:

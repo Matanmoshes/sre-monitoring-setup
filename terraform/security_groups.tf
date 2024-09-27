@@ -79,6 +79,21 @@ resource "aws_security_group" "instance_sg" {
     cidr_blocks = ["0.0.0.0/0"]  
   }
 
+  ingress {
+    description = "Allow AlertManager mail port"
+    from_port   = 9093
+    to_port     = 9093
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]  
+  }
+
+    ingress {
+    description = "Allow blcakbox access"
+    from_port   = 9115
+    to_port     = 9115
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]  
+  }
   egress {
     description = "Allow all outbound"
     from_port   = 0
