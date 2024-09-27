@@ -36,7 +36,7 @@ resource "aws_instance" "monitoring_instance" {
     chown -R ubuntu:ubuntu sre-monitoring-setup
 
     # Change to the repository directory
-    cd sre-monitoring-setup
+    cd sre-monitoring-setup/monitoring
 
     # Ensure the script has execution permissions
     chmod +x setup.sh
