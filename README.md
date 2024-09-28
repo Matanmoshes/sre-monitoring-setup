@@ -339,7 +339,7 @@ avg by (instance) (rate(node_cpu_seconds_total{mode!="idle"}[1m])) > 0.8
 ```promql
 probe_success{job="blackbox"} == 0
 ```
--HighResponseTime:
+- HighResponseTime:
 ```promql
 histogram_quantile(0.95, sum by (le) (rate(http_response_time_seconds_bucket{job="webapp"}[5m]))) > 1
 ```
@@ -423,8 +423,12 @@ docker-compose stop webapp
     - Verify that an email notification has been received at `matanmoshes66@gmail.com`.
     - The email should contain details about the triggered alert.
     
-    **Screenshot Placeholder:**
-    
+    **Screenshot :**
+<img width="1200" alt="image" src="https://github.com/user-attachments/assets/d4f72d53-910b-4f38-b877-15b8e3a5bdd3">
+<img width="1206" alt="image" src="https://github.com/user-attachments/assets/8d03b147-73b3-443b-8f3e-c5c9c31dd69a">
+
+
+
 2. **Troubleshoot if No Email Received:**
     
     - Ensure that the `SMTP_AUTH_PASSWORD` is correct.
