@@ -379,9 +379,14 @@ To visualize metrics such as network stats and server resource utilization, crea
 ![image](https://github.com/user-attachments/assets/a07cfe11-7343-48f1-9262-1833639fa630)
 
    - Choose a pre-built dashboard template from the Grafana website. You need to copy the dashboard ID, in my case, I used the `Node Exporter Full` (id - 1860) because it already has what I need.
+
+
 ![image](https://github.com/user-attachments/assets/bbf4f107-0b98-41c6-9fe9-96a480859f3b)
+
 ![image](https://github.com/user-attachments/assets/19a9e7fe-1eef-4386-8bf0-84a301907949)
+
 ![image](https://github.com/user-attachments/assets/effe4474-94ca-4259-af16-2813b898404e)
+
 
 ---
 
