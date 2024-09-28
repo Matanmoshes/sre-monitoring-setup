@@ -11,7 +11,7 @@ This project establishes a comprehensive monitoring stack utilizing Docker conta
 Continuous Integration (CI) is handled via GitHub Actions, which builds and pushes Docker images to Docker Hub. Continuous Deployment (CD) is achieved using Terraform to provision and configure the necessary AWS infrastructure.
 
 >[!Note]
->While not mandatory, I utilize a custom domain name for this web application setup. I added an A record to my hosted zone in Route 53 pointing to the EC2 >public IP, allowing >access to the web application, Prometheus, and Grafana using http://sre-project.matan-moshe.online along with the required ports (e.>g., :9090 for Prometheus)
+>While not mandatory, I utilize a custom domain name for this web application setup. I added an A record to my hosted zone in Route 53 pointing to the EC2 >public IP, allowing >access to the web application, Prometheus, and Grafana using http://sre-project.matan-moshe.online along with the required ports (e.g., :9090 for Prometheus)
 
 ---
 # Prerequisites
@@ -98,7 +98,7 @@ The CI pipeline is managed using GitHub Actions. Upon pushing new code to the re
 
 ### Screenshot
 
-![[Pasted image 20240928122201.png]]
+![image](https://github.com/user-attachments/assets/09fb4937-e82d-4f74-8c86-da77ce657cf2)
 
 ---
 # Continuous Deployment (CD) with Terraform
@@ -177,7 +177,7 @@ A Bash script template that initializes the EC2 instance, installs Docker and Do
 
 ### Screenshot
 
-![[Pasted image 20240928124314.png]]
+![image](https://github.com/user-attachments/assets/efcac146-b8ff-4dcf-9265-8c115f2496d6)
 
 ---
 # Deployment Steps
@@ -204,13 +204,18 @@ scrape_configs:
 
 **Screenshot:**
 
-![[Pasted image 20240928113313.png]]
+![image](https://github.com/user-attachments/assets/11a8b9c6-978f-441a-88be-f5c69a44ec51)
 
 ---
 ### 2. Verify Docker Containers
 
 After deployment, verify that all Docker containers are running correctly on the EC2 instance.
 
+- **Run the docker-compose file:**
+```Bash
+cd /home/ubuntu/sre-monitoring-setup/monitoring
+docker-compose up -d
+```
 - **Check Running Containers:**
 
   ```bash
@@ -219,7 +224,7 @@ After deployment, verify that all Docker containers are running correctly on the
 
 **Screenshot:**
 
-![[Pasted image 20240928115112.png]]
+![image](https://github.com/user-attachments/assets/302509a3-e35c-417b-8207-9069d482162c)
 
 ---
 ### 3. Access Monitoring Tools
@@ -233,7 +238,7 @@ After deployment, verify that all Docker containers are running correctly on the
   
 
 **Screenshot :**
-![[Pasted image 20240928114141.png]]
+![image](https://github.com/user-attachments/assets/122d4f52-f368-421f-8063-f1be750f4f61)
 
 #### **Prometheus**
 
@@ -241,7 +246,7 @@ After deployment, verify that all Docker containers are running correctly on the
 
 **Screenshot:**
 
-![[Pasted image 20240928114307.png]]
+![image](https://github.com/user-attachments/assets/324b0d93-f343-48bf-b6fe-6a780bfc8b45)
 
 #### **Grafana**
 
@@ -251,7 +256,7 @@ After deployment, verify that all Docker containers are running correctly on the
   - **Password:** `admin` (You will be prompted to change this upon first login)
 
 **Screenshot:**
-![[Pasted image 20240928114508.png]]
+![image](https://github.com/user-attachments/assets/a035a40d-785a-4a46-a5e7-f31c1594b72e)
 
 ---
 ### 4. Configure Grafana
@@ -261,7 +266,7 @@ After deployment, verify that all Docker containers are running correctly on the
    - Enter the default credentials and set a new password.
 
    **Screenshot:**
-![[Pasted image 20240928131025.png]]
+![image](https://github.com/user-attachments/assets/7ae0bb1a-15b4-41d9-a180-6569ea36f38a)
 
 
 2. **Add Prometheus as Data Source:**
@@ -271,13 +276,13 @@ After deployment, verify that all Docker containers are running correctly on the
    - Click **Save & Test**.
 
    **Screenshot :**
-![[Pasted image 20240928114850.png]]
+![image](https://github.com/user-attachments/assets/181a9ef9-2d9b-49ae-8009-1ddef751e78c)
 
    **Test Connection:**
 
    **Screenshot:**
 
-   ![[Pasted image 20240928115002.png]]
+![image](https://github.com/user-attachments/assets/580d4149-5294-4d5a-a0f2-20f8e7202720)
 
 
 ---
@@ -286,11 +291,31 @@ After deployment, verify that all Docker containers are running correctly on the
 
 Ensure that alerts defined in `alerts.yml` are correctly configured and visible in Grafana.
 
-1. **Navigate to Alert Rules:**
+ **Navigate to Alert Rules:**
    - Go to **Alerting** > **Alert rules** in Grafana.
 
+Those are the alerts created:
+- HighCPUUsage: 
+```promql
+avg by (instance) (rate(node_cpu_seconds_total{mode!="idle"}[1m])) > 0.8
+```
+- HighMemoryUsage:
+```promql
+(node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes > 0.9
+```
+- WebappDown:
+```promql
+probe_success{job="blackbox"} == 0
+```
+-HighResponseTime:
+```promql
+histogram_quantile(0.95, sum by (le) (rate(http_response_time_seconds_bucket{job="webapp"}[5m]))) > 1
+```
+
    **Screenshot:**
-   ![[Pasted image 20240928115858.png]]
+![image](https://github.com/user-attachments/assets/40b35633-fed0-4411-a08e-7bcd5b875f2b)
+
+
 
 ---
 ### 6. Create Dashboards
@@ -299,18 +324,13 @@ To visualize metrics such as network stats and server resource utilization, crea
 
 1. **Import Existing Dashboard Templates:**
    - Go to **Create** > **Import** in Grafana.
-   - Choose a pre-built dashboard template from the Grafana website need to copy the dashboard id, in my case i used the `Node Exporter Full` (id - 1860) because its already have what i need.
 
-   **Screenshot :**
+![image](https://github.com/user-attachments/assets/a07cfe11-7343-48f1-9262-1833639fa630)
 
-   ![[Pasted image 20240928131423.png]]
-![[Pasted image 20240928131812.png]]
-
-
-![[Pasted image 20240928131858.png]]
-
-![[Pasted image 20240928131937.png]]
-
+   - Choose a pre-built dashboard template from the Grafana website. You need to copy the dashboard ID, in my case, I used the `Node Exporter Full` (id - 1860) because it already has what I need.
+![image](https://github.com/user-attachments/assets/bbf4f107-0b98-41c6-9fe9-96a480859f3b)
+![image](https://github.com/user-attachments/assets/19a9e7fe-1eef-4386-8bf0-84a301907949)
+![image](https://github.com/user-attachments/assets/effe4474-94ca-4259-af16-2813b898404e)
 
 ---
 
@@ -320,7 +340,7 @@ To ensure that your alerting setup is functioning correctly, we need to test the
 
 #### **Trigger an Alert in Prometheus**
 
-We can stop on the `webapp` container that way it will triger the rulles we created:
+We can stop on the `webapp` container that way it will triger the rules we created:
 - alert name WebappDown - 
 
 - **Stop the `webapp` container:**
@@ -329,7 +349,13 @@ docker-compose stop webapp
 ``` 
 
 **Screenshot:**
-![[Pasted image 20240928134123.png]]
+![image](https://github.com/user-attachments/assets/5c849128-4cab-48de-9018-687d32a7f796)
+
+- Edit the `alerts.yml' file to change the percentage of the memory usage to 10% from 90% in the 'HighMemoryUsage' so the alert would be triggered.
+
+![image](https://github.com/user-attachments/assets/60c85f8f-71c5-467f-bc1b-020abd7356da)
+
+
 #### **Verify Alert in Prometheus**
 
 -  **Access Prometheus UI:**
@@ -341,8 +367,8 @@ docker-compose stop webapp
     - Go to **Status** > **Alerts**.
     - Confirm that the alert you triggered is active.
     
-    **Screenshot :**
-    ![[Pasted image 20240927213525.png]]
+    ![image](https://github.com/user-attachments/assets/0bbf9911-d2fe-4059-b038-ac6c5c71ba85)
+
 
 #### **Check Alertmanager for Alert Receipt**
 
@@ -356,7 +382,7 @@ docker-compose stop webapp
     - Check the **Alerts** tab for active alerts.
     
     **Screenshot:**
-![[Pasted image 20240928135504.png]]
+![image](https://github.com/user-attachments/assets/f3927f8a-2c65-432c-9465-2c4d7ec175b9)
 
 #### 8. **Confirm Email Notification**
 
