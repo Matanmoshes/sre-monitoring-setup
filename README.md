@@ -193,6 +193,38 @@ Before deploying, update the Prometheus configuration to point to the correct EC
   ssh -i /path/to/your/key.pem ubuntu@<EC2_PUBLIC_IP>
   ```
 
+- **Create or Edit the `.env` File**
+
+1. **Navigate to Your Project Directory:**
+
+```bash
+cd ~/sre-monitoring-setup/monitoring
+```
+
+2. **Create the `.env` File (If It Doesn't Exist):**
+
+```bash
+touch .env
+```
+
+3. **Edit the `.env` File:**
+
+Open the `.env` file using your preferred text editor. Here, we'll use `nano`:
+
+```bash
+nano .env
+```
+
+4. **Add the Environment Variables:**
+
+Ensure that your `.env` file contains the following lines **without quotes** and **without spaces** in the `SMTP_AUTH_PASSWORD`:
+
+```env
+OPENWEATHER_API_KEY=epi-key
+SMTP_AUTH_PASSWORD=app-google-password
+```
+
+
 - **File to Update:** `monitoring/prometheus.yml`
 
 ```yaml
