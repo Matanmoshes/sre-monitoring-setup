@@ -433,16 +433,14 @@ docker-compose stop webapp
     
     - Ensure that the `SMTP_AUTH_PASSWORD` is correct.
     - Check Alertmanager logs for any SMTP-related errors.
-    
-    bash
-    
-    Copy code
-    
-    `docker logs alertmanager`
+  ```Bash
+  docker logs alertmanager
+  ```
     
     **Screenshot Placeholder:**
 
 ---
+
 ## Troubleshooting
 
 If you encounter issues during deployment, follow these troubleshooting steps:
