@@ -18,7 +18,10 @@ resource "aws_instance" "monitoring_instance" {
   vpc_security_group_ids = [aws_security_group.instance_sg.id]
   key_name               = var.key_pair_name
 
-  user_data = "${file("user-data-script.sh")}"
+  user_data = templatefile("${path.module}/user-data.sh.tpl", {
+    OPENWEATHER_API_KEY = var.OPENWEATHER_API_KEY
+    SMTP_AUTH_PASSWORD  = var.SMTP_AUTH_PASSWORD
+  })
 
   tags = {
     Name = "monitoring-instance"

@@ -31,6 +31,7 @@ variable "allowed_ip" {
 variable "OPENWEATHER_API_KEY" {
   description = "API key for OpenWeather"
   type        = string
+  sensitive   = true
 }
 
 variable "SMTP_AUTH_PASSWORD" {
@@ -41,6 +42,6 @@ variable "SMTP_AUTH_PASSWORD" {
 
 variable "key_pair_name" {
   description = "Name of the key pair to use for EC2 instance"
-  default     = "27-09-24-key"  # change keys if needed
+  default     = "28-09-24-key"  # change keys if needed
 }
 
