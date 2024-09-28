@@ -11,7 +11,7 @@ This project establishes a comprehensive monitoring stack utilizing Docker conta
 Continuous Integration (CI) is handled via GitHub Actions, which builds and pushes Docker images to Docker Hub. Continuous Deployment (CD) is achieved using Terraform to provision and configure the necessary AWS infrastructure.
 
 >[!Note]
->While not mandatory, I utilize a custom domain name for this web application setup. I added an A record to my hosted zone in Route 53 pointing to the EC2 >public IP, allowing access to the web application, Prometheus, and Grafana using http://sre-project.matan-moshe.online along with the required ports (e.>g., :9090 for Prometheus)
+>While not mandatory, I utilize a custom domain name for this web application setup. I added an A record to my hosted zone in Route 53 pointing to the EC2 >public IP, allowing >access to the web application, Prometheus, and Grafana using http://sre-project.matan-moshe.online along with the required ports (e.>g., :9090 for Prometheus)
 
 ---
 # Prerequisites
