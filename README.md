@@ -118,20 +118,34 @@ Terraform is used to provision AWS infrastructure, including the EC2 instance, n
 Defines necessary variables with descriptions and sensitivity flags to ensure secure handling.
 
 ```hcl
-variable "ami_id" {
-  description = "AMI ID for the EC2 instance"
-  type        = string
+variable "aws_region" {
+  description = "AWS region to deploy resources"
+  default     = "us-east-1"
+}
+
+variable "vpc_cidr_block" {
+  description = "CIDR block for the VPC"
+  default     = "10.0.0.0/16"
+}
+
+variable "public_subnet_cidr" {
+  description = "CIDR block for the public subnet"
+  default     = "10.0.1.0/24"
 }
 
 variable "instance_type" {
-  description = "Type of EC2 instance"
-  type        = string
-  default     = "t2.micro"
+  description = "EC2 instance type"
+  default     = "t3.medium"
 }
 
-variable "key_pair_name" {
-  description = "Name of the SSH key pair"
-  type        = string
+variable "ami_id" {
+  description = "AMI ID for EC2 instance (Amazon Linux 2)"
+  default     = "ami-0e86e20dae9224db8"  # Ubuntu Server 24.04  
+}
+
+variable "allowed_ip" {
+  description = "Your IP address to allow SSH access (in CIDR notation)"
+  default     = "0.0.0.0/0"  
 }
 
 variable "OPENWEATHER_API_KEY" {
@@ -144,6 +158,11 @@ variable "SMTP_AUTH_PASSWORD" {
   description = "Gmail App Password for SMTP authentication"
   type        = string
   sensitive   = true
+}
+
+variable "key_pair_name" {
+  description = "Name of the key pair to use for EC2 instance"
+  default     = "28-09-24-key"  
 }
 ```
 
@@ -326,7 +345,7 @@ Ensure that alerts defined in `alerts.yml` are correctly configured and visible 
  **Navigate to Alert Rules:**
    - Go to **Alerting** > **Alert rules** in Grafana.
 
-Those are the alerts created:
+**Those are the alerts I created:**
 - HighCPUUsage: 
 ```promql
 avg by (instance) (rate(node_cpu_seconds_total{mode!="idle"}[1m])) > 0.8
