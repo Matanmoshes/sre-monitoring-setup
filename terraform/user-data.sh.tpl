@@ -62,7 +62,8 @@ mkdir -p prometheus-data grafana-data
 chown -R ubuntu:ubuntu prometheus-data grafana-data
 
 # Run Docker Compose as ubuntu user with environment variables
-sudo -H -u ubuntu bash -c "OPENWEATHER_API_KEY=${OPENWEATHER_API_KEY} SMTP_AUTH_PASSWORD=${SMTP_AUTH_PASSWORD} docker-compose up -d"
+#sudo -H -u ubuntu bash -c "docker-compose up -d"
+docker-compose up -d
 
 # Log the completion of the user data script
 echo "User data script completed at $(date)" >> /var/log/user-data.log
