@@ -19,6 +19,7 @@ Continuous Integration (CI) is handled via GitHub Actions, which builds and push
 Before proceeding, ensure you have the following:
 
 - **AWS Account:** With permissions to create EC2 instances, VPCs, subnets, and security groups.
+- **Key Pair:** To ssh tothe ec2 machine you will need to generate `.pem` key pair.
 - **S3 Bucket**: S3 Bucket that will use for terraform backend to all the `tfstate` files.
 - **Dynamodb Table**: DynamoDB table for managing state locking, to prevents concurrent updates.
 - **Docker Hub Account:** To store Docker images.
