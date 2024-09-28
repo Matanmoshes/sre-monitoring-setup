@@ -388,6 +388,10 @@ To visualize metrics such as network stats and server resource utilization, crea
 ![image](https://github.com/user-attachments/assets/effe4474-94ca-4259-af16-2813b898404e)
 
 
+<img width="1236" alt="image" src="https://github.com/user-attachments/assets/5dadfef9-6719-46ac-b3bd-3dc7633f0f3c">
+
+
+
 ---
 
 ### 7. Test Alerting Mechanism
