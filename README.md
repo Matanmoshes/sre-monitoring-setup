@@ -90,7 +90,7 @@ Alertmanager handles alerts sent by Prometheus, managing notification routing, g
   - **Routing Rules:** Defined to direct alerts based on severity and other labels.
 
 - **Key Settings:**
-  ```yaml
+```yaml
 global:
   resolve_timeout: 5m
   smtp_smarthost: 'smtp.gmail.com:587'
@@ -110,7 +110,7 @@ receivers:
     email_configs:
       - to: 'matan.moshe66@gmail.com'
         send_resolved: true
-  ```
+```
 
 ### Node Exporter
 
