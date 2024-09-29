@@ -15,6 +15,211 @@ Continuous Integration (CI) is handled via GitHub Actions, which builds and push
 
 ---
 
+
+# Prerequisites
+
+Before proceeding, ensure you have the following:
+
+- **AWS Account:** With permissions to create EC2 instances, VPCs, subnets, and security groups.
+- **Key Pair:** To ssh tothe ec2 machine you will need to generate `.pem` key pair.
+- **S3 Bucket**: S3 Bucket that will use for terraform backend to all the `tfstate` files.
+- **Dynamodb Table**: DynamoDB table for managing state locking, to prevents concurrent updates.
+- **Docker Hub Account:** To store Docker images.
+- **GitHub Repository:** Where the project code is hosted.
+- **Terraform Installed:** Version 1.3.0 or later.
+- **GitHub Actions Secrets:** Configure the following secrets in your GitHub repository:
+  - `AWS_ACCESS_KEY_ID`
+  - `AWS_SECRET_ACCESS_KEY`
+  - `OPENWEATHER_API_KEY`
+  - `SMTP_AUTH_PASSWORD`
+  - `DOCKER_USERNAME`
+  - `DOCKER_PASSWORD`
+
+---
+
+# Clone the project repo
+
+- Create a directory for the project and move to it:
+```Bash
+sudo mkdir monitoring_project
+cd monitoring_project
+```
+- Clone the project repo:
+```Bash
+git clone https://github.com/Matanmoshes/sre-monitoring-setup.git
+```
+
+---
+# Project Structure
+
+```
+sre-monitoring-setup/
+├── Dockerfile
+├── README.md
+├── app
+│   ├── __init__.py
+│   ├── app.py
+│   ├── static
+│   │   ├── background.jpg
+│   │   └── icons
+│   └── templates
+│       └── index.html
+├── monitoring
+│   ├── alertmanager.yml
+│   ├── alerts.yml
+│   ├── blackbox.yml
+│   ├── docker-compose.yml
+│   ├── prometheus.yml
+│   
+├── requirements.txt
+├── terraform
+│   ├── alb.tf
+│   ├── backend.tf
+│   ├── ec2_instance.tf
+│   ├── outputs.tf
+│   ├── security_groups.tf
+│   ├── variables.tf
+│   ├── vpc.tf
+│   └── user-data.sh.tpl
+└── tests
+    └── test_app.py
+```
+
+---
+# Continuous Integration (CI)
+
+The CI pipeline is managed using GitHub Actions. Upon pushing new code to the repository, the CI workflow builds the Docker image and pushes it to Docker Hub.
+
+## CI Workflow Overview
+
+- **Workflow File:** `.github/workflows/ci-pipeline`
+- **Key Steps:**
+  1. **Checkout Code:** Uses `actions/checkout@v2` to clone the repository.
+  2. **Docker Hub Login:** Utilizes `docker/login-action@v2` to authenticate with Docker Hub using GitHub Secrets.
+  3. **Build and Push Docker Image:** Employs `docker/build-push-action@v4` to build the Docker image and push it to Docker Hub, passing the `OPENWEATHER_API_KEY` as a build argument.
+
+### Screenshot
+
+![image](https://github.com/user-attachments/assets/09fb4937-e82d-4f74-8c86-da77ce657cf2)
+
+---
+# Continuous Deployment (CD) with Terraform
+
+Terraform is used to provision AWS infrastructure, including the EC2 instance, networking components, and security groups. It also configures the EC2 instance's user data to set up Docker containers.
+
+## Terraform Configuration Overview
+ - **Workflow File:** `.github/workflows/cd-pipeline`
+- **Directory:** `terraform/`
+- **Key Files:**
+  - `variables.tf`: Defines input variables like `ami_id`, `instance_type`, `OPENWEATHER_API_KEY`, and `SMTP_AUTH_PASSWORD`.
+  - `ec2_instance.tf`: Configures the EC2 instance, including user data script execution.
+  - `user-data.sh.tpl`: Template script for initializing the EC2 instance, installing Docker, cloning the repository, and running Docker Compose with injected environment variables.
+
+## **Variable Definitions (`variables.tf`)**
+
+Defines necessary variables with descriptions and sensitivity flags to ensure secure handling.
+
+```hcl
+variable "aws_region" {
+  description = "AWS region to deploy resources"
+  default     = "us-east-1"
+}
+
+variable "vpc_cidr_block" {
+  description = "CIDR block for the VPC"
+  default     = "10.0.0.0/16"
+}
+
+variable "public_subnet_cidr" {
+  description = "CIDR block for the public subnet"
+  default     = "10.0.1.0/24"
+}
+
+variable "instance_type" {
+  description = "EC2 instance type"
+  default     = "t3.medium"
+}
+
+variable "ami_id" {
+  description = "AMI ID for EC2 instance (Amazon Linux 2)"
+  default     = "ami-0e86e20dae9224db8"  # Ubuntu Server 24.04  
+}
+
+variable "allowed_ip" {
+  description = "Your IP address to allow SSH access (in CIDR notation)"
+  default     = "0.0.0.0/0"  
+}
+
+variable "OPENWEATHER_API_KEY" {
+  description = "API key for OpenWeather"
+  type        = string
+  sensitive   = true
+}
+
+variable "SMTP_AUTH_PASSWORD" {
+  description = "Gmail App Password for SMTP authentication"
+  type        = string
+  sensitive   = true
+}
+
+variable "key_pair_name" {
+  description = "Name of the key pair to use for EC2 instance"
+  default     = "28-09-24-key"  
+}
+```
+
+## **EC2 Instance Configuration (`ec2_instance.tf`)**
+
+Provisions the EC2 instance and injects the user data script using the `templatefile` function to interpolate variables securely.
+
+```hcl
+resource "aws_instance" "monitoring_instance" {
+  ami                    = var.ami_id
+  instance_type          = var.instance_type
+  subnet_id              = aws_subnet.public_subnet.id
+  vpc_security_group_ids = [aws_security_group.instance_sg.id]
+  key_name               = var.key_pair_name
+
+  user_data = templatefile("${path.module}/user-data.sh.tpl", {
+    OPENWEATHER_API_KEY = var.OPENWEATHER_API_KEY
+    SMTP_AUTH_PASSWORD  = var.SMTP_AUTH_PASSWORD
+  })
+
+  tags = {
+    Name = "monitoring-instance"
+  }
+}
+```
+
+## **User Data Script Template (`user-data.sh.tpl`)**
+
+A Bash script template that initializes the EC2 instance, installs Docker and Docker Compose, clones the repository, and runs Docker Compose with the necessary environment variables.
+
+**Key Parts from the script:**
+```Bash
+## Export environment variables for Docker Compose
+echo "export OPENWEATHER_API_KEY=${OPENWEATHER_API_KEY}" >> /etc/profile
+echo "export SMTP_AUTH_PASSWORD=${SMTP_AUTH_PASSWORD}" >> /etc/profile
+#
+# This is only the setup part 
+sudo -H -u ubuntu git clone https://github.com/Matanmoshes/sre-monitoring-setup.git /home/ubuntu/sre-monitoring-setup
+
+chown -R ubuntu:ubuntu /home/ubuntu/sre-monitoring-setup
+cd /home/ubuntu/sre-monitoring-setup/monitoring
+
+mkdir -p prometheus-data grafana-data
+chown -R ubuntu:ubuntu prometheus-data grafana-data
+
+docker-compose up -d
+echo "User data script completed at $(date)" >> /var/log/user-data.log
+```
+
+### Screenshot
+
+![image](https://github.com/user-attachments/assets/efcac146-b8ff-4dcf-9265-8c115f2496d6)
+
+---
+
 # Monitoring Setup
 
 I've implemented a monitoring setup using Docker Compose. This setup integrates several key components: **Prometheus**, **Grafana**, **Alertmanager**, **Node Exporter**, and **Blackbox Exporter**. Additionally, I've added to my Python Flask application a library  `prometheus_flask_exporter` that integrating the prometheus to expose custom metrics.
@@ -271,208 +476,6 @@ histogram_quantile(0.95, sum(rate(http_response_time_seconds_bucket{job="webapp"
 ```promql
 rate(app_error_count{status=~"5.."}[5m]) > 500
 ```
----
-# Prerequisites
-
-Before proceeding, ensure you have the following:
-
-- **AWS Account:** With permissions to create EC2 instances, VPCs, subnets, and security groups.
-- **Key Pair:** To ssh tothe ec2 machine you will need to generate `.pem` key pair.
-- **S3 Bucket**: S3 Bucket that will use for terraform backend to all the `tfstate` files.
-- **Dynamodb Table**: DynamoDB table for managing state locking, to prevents concurrent updates.
-- **Docker Hub Account:** To store Docker images.
-- **GitHub Repository:** Where the project code is hosted.
-- **Terraform Installed:** Version 1.3.0 or later.
-- **GitHub Actions Secrets:** Configure the following secrets in your GitHub repository:
-  - `AWS_ACCESS_KEY_ID`
-  - `AWS_SECRET_ACCESS_KEY`
-  - `OPENWEATHER_API_KEY`
-  - `SMTP_AUTH_PASSWORD`
-  - `DOCKER_USERNAME`
-  - `DOCKER_PASSWORD`
-
----
-
-# Clone the project repo
-
-- Create a directory for the project and move to it:
-```Bash
-sudo mkdir monitoring_project
-cd monitoring_project
-```
-- Clone the project repo:
-```Bash
-git clone https://github.com/Matanmoshes/sre-monitoring-setup.git
-```
-
----
-# Project Structure
-
-```
-sre-monitoring-setup/
-├── Dockerfile
-├── README.md
-├── app
-│   ├── __init__.py
-│   ├── app.py
-│   ├── static
-│   │   ├── background.jpg
-│   │   └── icons
-│   └── templates
-│       └── index.html
-├── monitoring
-│   ├── alertmanager.yml
-│   ├── alerts.yml
-│   ├── blackbox.yml
-│   ├── docker-compose.yml
-│   ├── prometheus.yml
-│   
-├── requirements.txt
-├── terraform
-│   ├── alb.tf
-│   ├── backend.tf
-│   ├── ec2_instance.tf
-│   ├── outputs.tf
-│   ├── security_groups.tf
-│   ├── variables.tf
-│   ├── vpc.tf
-│   └── user-data.sh.tpl
-└── tests
-    └── test_app.py
-```
-
----
-# Continuous Integration (CI)
-
-The CI pipeline is managed using GitHub Actions. Upon pushing new code to the repository, the CI workflow builds the Docker image and pushes it to Docker Hub.
-
-## CI Workflow Overview
-
-- **Workflow File:** `.github/workflows/ci-pipeline`
-- **Key Steps:**
-  1. **Checkout Code:** Uses `actions/checkout@v2` to clone the repository.
-  2. **Docker Hub Login:** Utilizes `docker/login-action@v2` to authenticate with Docker Hub using GitHub Secrets.
-  3. **Build and Push Docker Image:** Employs `docker/build-push-action@v4` to build the Docker image and push it to Docker Hub, passing the `OPENWEATHER_API_KEY` as a build argument.
-
-### Screenshot
-
-![image](https://github.com/user-attachments/assets/09fb4937-e82d-4f74-8c86-da77ce657cf2)
-
----
-# Continuous Deployment (CD) with Terraform
-
-Terraform is used to provision AWS infrastructure, including the EC2 instance, networking components, and security groups. It also configures the EC2 instance's user data to set up Docker containers.
-
-## Terraform Configuration Overview
- - **Workflow File:** `.github/workflows/cd-pipeline`
-- **Directory:** `terraform/`
-- **Key Files:**
-  - `variables.tf`: Defines input variables like `ami_id`, `instance_type`, `OPENWEATHER_API_KEY`, and `SMTP_AUTH_PASSWORD`.
-  - `ec2_instance.tf`: Configures the EC2 instance, including user data script execution.
-  - `user-data.sh.tpl`: Template script for initializing the EC2 instance, installing Docker, cloning the repository, and running Docker Compose with injected environment variables.
-
-## **Variable Definitions (`variables.tf`)**
-
-Defines necessary variables with descriptions and sensitivity flags to ensure secure handling.
-
-```hcl
-variable "aws_region" {
-  description = "AWS region to deploy resources"
-  default     = "us-east-1"
-}
-
-variable "vpc_cidr_block" {
-  description = "CIDR block for the VPC"
-  default     = "10.0.0.0/16"
-}
-
-variable "public_subnet_cidr" {
-  description = "CIDR block for the public subnet"
-  default     = "10.0.1.0/24"
-}
-
-variable "instance_type" {
-  description = "EC2 instance type"
-  default     = "t3.medium"
-}
-
-variable "ami_id" {
-  description = "AMI ID for EC2 instance (Amazon Linux 2)"
-  default     = "ami-0e86e20dae9224db8"  # Ubuntu Server 24.04  
-}
-
-variable "allowed_ip" {
-  description = "Your IP address to allow SSH access (in CIDR notation)"
-  default     = "0.0.0.0/0"  
-}
-
-variable "OPENWEATHER_API_KEY" {
-  description = "API key for OpenWeather"
-  type        = string
-  sensitive   = true
-}
-
-variable "SMTP_AUTH_PASSWORD" {
-  description = "Gmail App Password for SMTP authentication"
-  type        = string
-  sensitive   = true
-}
-
-variable "key_pair_name" {
-  description = "Name of the key pair to use for EC2 instance"
-  default     = "28-09-24-key"  
-}
-```
-
-## **EC2 Instance Configuration (`ec2_instance.tf`)**
-
-Provisions the EC2 instance and injects the user data script using the `templatefile` function to interpolate variables securely.
-
-```hcl
-resource "aws_instance" "monitoring_instance" {
-  ami                    = var.ami_id
-  instance_type          = var.instance_type
-  subnet_id              = aws_subnet.public_subnet.id
-  vpc_security_group_ids = [aws_security_group.instance_sg.id]
-  key_name               = var.key_pair_name
-
-  user_data = templatefile("${path.module}/user-data.sh.tpl", {
-    OPENWEATHER_API_KEY = var.OPENWEATHER_API_KEY
-    SMTP_AUTH_PASSWORD  = var.SMTP_AUTH_PASSWORD
-  })
-
-  tags = {
-    Name = "monitoring-instance"
-  }
-}
-```
-
-## **User Data Script Template (`user-data.sh.tpl`)**
-
-A Bash script template that initializes the EC2 instance, installs Docker and Docker Compose, clones the repository, and runs Docker Compose with the necessary environment variables.
-
-**Key Parts from the script:**
-```Bash
-## Export environment variables for Docker Compose
-echo "export OPENWEATHER_API_KEY=${OPENWEATHER_API_KEY}" >> /etc/profile
-echo "export SMTP_AUTH_PASSWORD=${SMTP_AUTH_PASSWORD}" >> /etc/profile
-#
-# This is only the setup part 
-sudo -H -u ubuntu git clone https://github.com/Matanmoshes/sre-monitoring-setup.git /home/ubuntu/sre-monitoring-setup
-
-chown -R ubuntu:ubuntu /home/ubuntu/sre-monitoring-setup
-cd /home/ubuntu/sre-monitoring-setup/monitoring
-
-mkdir -p prometheus-data grafana-data
-chown -R ubuntu:ubuntu prometheus-data grafana-data
-
-docker-compose up -d
-echo "User data script completed at $(date)" >> /var/log/user-data.log
-```
-
-### Screenshot
-
-![image](https://github.com/user-attachments/assets/efcac146-b8ff-4dcf-9265-8c115f2496d6)
 
 ---
 # Deployment Steps
