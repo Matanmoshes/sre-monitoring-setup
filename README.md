@@ -19,6 +19,23 @@ Continuous Integration (CI) is handled via GitHub Actions, which builds and push
 
 I've implemented a monitoring setup using Docker Compose. This setup integrates several key components: **Prometheus**, **Grafana**, **Alertmanager**, **Node Exporter**, and **Blackbox Exporter**. Additionally, I've added to my Python Flask application a library  `prometheus_flask_exporter` that integrating the prometheus to expose custom metrics.
 
+```Diagram
++-----------------+        +-----------------+        +-----------------+
+|   Node Exporter | <----> |    Prometheus   | <----> |   Alertmanager  |
++-----------------+        +-----------------+        +-----------------+
+                               ^    ^    ^
+                               |    |    |
+                        +------+    |    +------+
+                        |           |           |
+               +----------------+  |  +----------------+ 
+               | Blackbox Exporter|  |  | Flask App      |
+               +----------------+  |  +----------------+
+                                     |
+                              +----------------+
+                              |     Grafana    |
+                              +----------------+
+```
+
 ## Docker Compose Configuration
 
 My monitoring setup is orchestrated using a `docker-compose.yml` file, which defines and manages all necessary services.
