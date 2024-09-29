@@ -143,7 +143,7 @@ Blackbox Exporter probes endpoints over HTTP, TCP, and ICMP, allowing me to moni
   - **Probing Modules:** Configured to perform HTTP checks against my Flask application’s health endpoint.
 
 - **Key Settings:**
-  ```yaml
+```yaml
 modules:
   http_2xx:
     prober: http
