@@ -4,6 +4,7 @@ global:
   smtp_from: 'matanmoshes66@gmail.com'
   smtp_auth_username: 'matanmoshes66@gmail.com'
   smtp_auth_password: '{{ env "SMTP_AUTH_PASSWORD" }}'
+  smtp_require_tls: true
 
 route:
   receiver: 'email-notifications'
@@ -14,5 +15,5 @@ route:
 receivers:
   - name: 'email-notifications'
     email_configs:
-      - to: 'matanmoshes66@gmail.com'
+      - to: 'matan.moshe66@gmail.com'
         send_resolved: true
