@@ -14,6 +14,247 @@ Continuous Integration (CI) is handled via GitHub Actions, which builds and push
 >While not mandatory, I utilize a custom domain name for this web application setup. I added an A record to my hosted zone in Route 53 pointing to the EC2 >public IP, allowing >access to the web application, Prometheus, and Grafana using http://sre-project.matan-moshe.online along with the required ports (e.g., :9090 for Prometheus)
 
 ---
+
+# Monitoring Setup
+
+I've implemented a monitoring setup using Docker Compose. This setup integrates several key components: **Prometheus**, **Grafana**, **Alertmanager**, **Node Exporter**, and **Blackbox Exporter**. Additionally, I've added to my Python Flask application a library  `prometheus_flask_exporter` that integrating the prometheus to expose custom metrics.
+
+## Docker Compose Configuration
+
+My monitoring setup is orchestrated using a `docker-compose.yml` file, which defines and manages all necessary services.
+
+### Prometheus
+
+Prometheus serves as the core of my monitoring stack, responsible for scraping and storing metrics from various sources.
+
+- **Configuration:**
+  - **Scrape Targets:** Configured to collect metrics from `Node Exporter`, my Flask application, and the `Blackbox Exporter`.
+  - **Alerting Rules:** Defined in a separate `alerts.yml` file, which includes all my custom alert definitions.
+
+- **Key Settings:**
+```yaml
+scrape_configs:
+  - job_name: 'webapp'
+    static_configs:
+      - targets: ['webapp:5000']  
+
+  - job_name: 'node_exporter'
+    static_configs:
+      - targets: ['node_exporter:9100']
+
+  - job_name: 'blackbox'
+    metrics_path: /probe
+    params:
+      module: [http_2xx]  
+    static_configs:
+      - targets:
+          - http://34.207.195.96:80  # Public IP of the web application
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - target_label: instance
+        replacement: webapp
+      - target_label: __address__
+        replacement: blackbox_exporter:9115  
+
+rule_files:
+  - "alerts.yml"
+
+  ```
+
+### Grafana
+
+I used Grafana for dashboarding solution, enabling me to visualize metrics collected by Prometheus.
+
+- **Configuration:**
+  - **Data Source:** Connected to Prometheus for real-time data visualization.
+  - **Dashboards:** Import required dashboard  from
+
+- **Key Settings:**
+  ```yaml
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    volumes:
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+  ```
+
+### Alertmanager
+
+Alertmanager handles alerts sent by Prometheus, managing notification routing, grouping, and suppression.
+
+- **Configuration:**
+  - **Receivers:** Configured to send notifications via email from mu private mailbox.
+  - **Routing Rules:** Defined to direct alerts based on severity and other labels.
+
+- **Key Settings:**
+  ```yaml
+global:
+  resolve_timeout: 5m
+  smtp_smarthost: 'smtp.gmail.com:587'
+  smtp_from: 'matanmoshes66@gmail.com'
+  smtp_auth_username: 'matanmoshes66@gmail.com'
+  smtp_auth_password: '{{ env "SMTP_AUTH_PASSWORD" }}'
+  smtp_require_tls: true
+
+route:
+  receiver: 'email-notifications'
+  group_wait: 10s
+  group_interval: 10m
+  repeat_interval: 1h
+
+receivers:
+  - name: 'email-notifications'
+    email_configs:
+      - to: 'matan.moshe66@gmail.com'
+        send_resolved: true
+  ```
+
+### Node Exporter
+
+Node Exporter collects hardware and OS metrics from the host machine, providing insights into system-level performance.
+
+- **Configuration:**
+  - **Metrics Collected:** CPU usage, memory usage, disk, network statistics, and more.
+
+- **Key Settings:**
+  ```yaml
+  node_exporter:
+    image: prom/node-exporter
+    ports:
+      - "9100:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.ignored-mount-points=^/(sys|proc|dev|host|etc)($|/)'
+  ```
+
+### Blackbox Exporter
+
+Blackbox Exporter probes endpoints over HTTP, TCP, and ICMP, allowing me to monitor the availability and responsiveness of my web application.
+
+- **Configuration:**
+  - **Probing Modules:** Configured to perform HTTP checks against my Flask application’s health endpoint.
+
+- **Key Settings:**
+  ```yaml
+modules:
+  http_2xx:
+    prober: http
+    timeout: 5s
+    http:
+      valid_http_versions: ["HTTP/1.1", "HTTP/2"]
+      method: GET
+      tls_config:
+        insecure_skip_verify: false
+      fail_if_ssl: false
+      fail_if_not_ssl: false
+  ```
+
+### Integration with Python Flask Application
+
+To expose application-specific metrics, I've integrated the **Prometheus Flask Exporter** library into my Flask application. 
+
+#### Prometheus Flask Exporter Setup
+
+- **Library Integration:**
+  ```python
+  from prometheus_flask_exporter import PrometheusMetrics
+  
+  app = Flask(__name__)
+  metrics = PrometheusMetrics(app)
+  ```
+
+- **Custom Metrics:**
+  I've defined two custom counters to track the total number of requests and error responses:
+  
+  ```python
+  # Define custom metrics if needed
+  REQUEST_COUNT = metrics.counter(
+      'app_request_count', 'Total number of requests',
+      labels={'endpoint': lambda: request.endpoint}
+  )
+  
+  ERROR_COUNT = metrics.counter(
+      'app_error_count', 'Total number of error responses',
+      labels={'endpoint': lambda: request.endpoint, 'status': lambda: getattr(request, 'status_code', 200)}
+  )
+  ```
+
+These metrics allow me to monitor the frequency of requests to different endpoints and track the occurrence of HTTP 5xx errors, which are critical for maintaining application reliability.
+
+---
+
+# Defined Alerts
+
+I've established a series of Prometheus alerts. Each alert is used to monitor specific aspects of my infrastructure and application.
+
+### HighCPUUsage
+
+- **Description:**  
+  Triggers when the average CPU usage across all cores on a host exceeds **80%** for more than **2 minutes**.
+
+- **Purpose:**  
+  To identify and address scenarios where the system's CPU resources are heavily utilized, which could lead to performance degradation or indicate inefficient processes running on the host.
+  
+```promql
+avg(rate(node_cpu_seconds_total{mode!="idle"}[1m])) by (instance) > 0.8
+```
+
+### HighMemoryUsage
+
+- **Description:**  
+  It is triggered when memory usage on a host surpasses **90%** for over **2 minutes**.
+
+- **Purpose:**  
+  To monitor memory consumption and prevent potential application crashes or slowdowns due to insufficient available memory.
+
+```promql
+(node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes > 0.9
+```
+
+### WebappDown
+
+- **Description:**  
+  Alerts when the web application becomes unreachable or fails to respond for more than **2 minutes**.
+
+- **Purpose:**  
+  Ensures that the web application remains available to users. Immediate notification allows me to investigate and resolve downtime issues promptly, minimizing user impact.
+
+```promql
+probe_success{job="blackbox"} == 0
+```
+
+### HighResponseTime
+
+- **Description:**  
+  Activates when the **95th percentile** of HTTP response times for the web application exceeds **1 second** over the last **2 minutes**.
+
+- **Purpose:**  
+  To monitor the application's responsiveness and detect performance bottlenecks. High response times can adversely affect user experience, so this alert helps in maintaining optimal performance levels.
+
+```promql
+histogram_quantile(0.95, sum(rate(http_response_time_seconds_bucket{job="webapp"}[5m])) by (le)) > 1
+```
+
+### HighErrorCount
+
+- **Description:**  
+  Alerts when the rate of HTTP **5xx** errors exceeds **500** in the last **5 minutes**.
+
+- **Purpose:**  
+  To detect a errors in server-side errors, which could indicate underlying application issues, such as bugs or resource problem. Prompt detection allows for quick intervention to maintain application stability and user satisfaction.
+
+```promql
+rate(app_error_count{status=~"5.."}[5m]) > 500
+```
+---
 # Prerequisites
 
 Before proceeding, ensure you have the following:
