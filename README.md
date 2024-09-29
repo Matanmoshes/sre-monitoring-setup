@@ -329,7 +329,7 @@ sre-monitoring-setup/
 
 The CI pipeline is managed using GitHub Actions. Upon pushing new code to the repository, the CI workflow builds the Docker image and pushes it to Docker Hub.
 
-### CI Workflow Overview
+## CI Workflow Overview
 
 - **Workflow File:** `.github/workflows/ci-pipeline`
 - **Key Steps:**
@@ -346,7 +346,7 @@ The CI pipeline is managed using GitHub Actions. Upon pushing new code to the re
 
 Terraform is used to provision AWS infrastructure, including the EC2 instance, networking components, and security groups. It also configures the EC2 instance's user data to set up Docker containers.
 
-### Terraform Configuration Overview
+## Terraform Configuration Overview
  - **Workflow File:** `.github/workflows/cd-pipeline`
 - **Directory:** `terraform/`
 - **Key Files:**
@@ -354,7 +354,7 @@ Terraform is used to provision AWS infrastructure, including the EC2 instance, n
   - `ec2_instance.tf`: Configures the EC2 instance, including user data script execution.
   - `user-data.sh.tpl`: Template script for initializing the EC2 instance, installing Docker, cloning the repository, and running Docker Compose with injected environment variables.
 
-#### **Variable Definitions (`variables.tf`)**
+## **Variable Definitions (`variables.tf`)**
 
 Defines necessary variables with descriptions and sensitivity flags to ensure secure handling.
 
@@ -407,7 +407,7 @@ variable "key_pair_name" {
 }
 ```
 
-#### **EC2 Instance Configuration (`ec2_instance.tf`)**
+## **EC2 Instance Configuration (`ec2_instance.tf`)**
 
 Provisions the EC2 instance and injects the user data script using the `templatefile` function to interpolate variables securely.
 
@@ -430,7 +430,7 @@ resource "aws_instance" "monitoring_instance" {
 }
 ```
 
-#### **User Data Script Template (`user-data.sh.tpl`)**
+## **User Data Script Template (`user-data.sh.tpl`)**
 
 A Bash script template that initializes the EC2 instance, installs Docker and Docker Compose, clones the repository, and runs Docker Compose with the necessary environment variables.
 
