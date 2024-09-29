@@ -434,6 +434,7 @@ resource "aws_instance" "monitoring_instance" {
 
 A Bash script template that initializes the EC2 instance, installs Docker and Docker Compose, clones the repository, and runs Docker Compose with the necessary environment variables.
 
+**Key Parts from the script:**
 ```Bash
 ## Export environment variables for Docker Compose
 echo "export OPENWEATHER_API_KEY=${OPENWEATHER_API_KEY}" >> /etc/profile
