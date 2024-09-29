@@ -434,6 +434,23 @@ resource "aws_instance" "monitoring_instance" {
 
 A Bash script template that initializes the EC2 instance, installs Docker and Docker Compose, clones the repository, and runs Docker Compose with the necessary environment variables.
 
+```Bash
+## Export environment variables for Docker Compose
+echo "export OPENWEATHER_API_KEY=${OPENWEATHER_API_KEY}" >> /etc/profile
+echo "export SMTP_AUTH_PASSWORD=${SMTP_AUTH_PASSWORD}" >> /etc/profile
+#
+# This is only the setup part 
+sudo -H -u ubuntu git clone https://github.com/Matanmoshes/sre-monitoring-setup.git /home/ubuntu/sre-monitoring-setup
+
+chown -R ubuntu:ubuntu /home/ubuntu/sre-monitoring-setup
+cd /home/ubuntu/sre-monitoring-setup/monitoring
+
+mkdir -p prometheus-data grafana-data
+chown -R ubuntu:ubuntu prometheus-data grafana-data
+
+docker-compose up -d
+echo "User data script completed at $(date)" >> /var/log/user-data.log
+```
 
 ### Screenshot
 
