@@ -38,3 +38,12 @@ groups:
         annotations:
           summary: "High Response Time Detected for Webapp"
           description: "The 95th percentile response time is above 1 second for the last 2 minutes."
+
+      - alert: HighErrorCount
+        expr: rate(app_error_count{status=~"5.."}[5m]) > 500
+        for: 5m
+        labels:
+          severity: "critical"
+        annotations:
+          summary: "High Number of HTTP 5xx Errors on {{ $labels.instance }}"
+          description: "There have been more than 500 HTTP 5xx errors in the last 5 minutes on instance {{ $labels.instance }}."
