@@ -537,7 +537,7 @@ scrape_configs:
 ![image](https://github.com/user-attachments/assets/11a8b9c6-978f-441a-88be-f5c69a44ec51)
 
 ---
-### 2. Verify Docker Containers
+## 2. Verify Docker Containers
 
 After deployment, verify that all Docker containers are running correctly on the EC2 instance.
 
@@ -557,7 +557,7 @@ docker-compose up -d
 ![image](https://github.com/user-attachments/assets/302509a3-e35c-417b-8207-9069d482162c)
 
 ---
-### 3. Access Monitoring Tools
+## 3. Access Monitoring Tools
 
 ####  **Web Application**
 
@@ -589,7 +589,7 @@ docker-compose up -d
 ![image](https://github.com/user-attachments/assets/a035a40d-785a-4a46-a5e7-f31c1594b72e)
 
 ---
-### 4. Configure Grafana
+## 4. Configure Grafana
 
 1. **Login to Grafana:**
    - Navigate to `http://<EC2_PUBLIC_IP>:3000`
@@ -617,7 +617,7 @@ docker-compose up -d
 
 ---
 
-### 5. Verify Alerts
+## 5. Verify Alerts
 
 Ensure that alerts defined in `alerts.yml` are correctly configured and visible in Grafana.
 
@@ -648,13 +648,11 @@ histogram_quantile(0.95, sum by (le) (rate(http_response_time_seconds_bucket{job
 
 
 ---
-### 6. Create Dashboards
+## 6. Create Dashboards
 
 To visualize metrics such as network stats and server resource utilization, I've used the imported dashboard `Node Exporter Full` from grafana website and the second dashboard I created with promql queries.
 
-I've set up a custom Grafana dashboard to monitor my Flask application using the following PromQL queries. Additionally, I imported the **Node Exporter Full** dashboard to monitor host-level metrics comprehensively.
-
-#### Custom Dashboard Queries
+### Custom Dashboard Queries
 
 1. **CPU Usage node_exporter**
    
@@ -707,7 +705,7 @@ I've set up a custom Grafana dashboard to monitor my Flask application using the
 ![image](https://github.com/user-attachments/assets/1e28765b-5c42-41a7-a0ee-f61dafa35597)
 
 
-#### Imported Node Exporter Full Dashboard
+### Imported Node Exporter Full Dashboard
 
 In addition to my custom dashboard, I imported the **Node Exporter Full** dashboard from Grafana's [official dashboard repository](https://grafana.com/grafana/dashboards/1860-node-exporter-full/). This comprehensive dashboard provides in-depth insights into the host system's performance, including CPU, memory, disk, and network metrics. Integrating this dashboard alongside my custom panels ensures a holistic view of both application-specific and system-level metrics.
 
@@ -801,9 +799,7 @@ docker-compose stop webapp
     - Check Alertmanager logs for any SMTP-related errors.
   ```Bash
   docker logs alertmanager
-  ```
-    
-    **Screenshot Placeholder:**
+  ```    
 
 ---
 
@@ -854,4 +850,17 @@ If you encounter issues during deployment, follow these troubleshooting steps:
   ```bash
   docker logs alertmanager
   ```
+
+  ---
+
+## Reference
+
+- https://grafana.com/docs/alloy/latest/reference/components/prometheus/prometheus.exporter.blackbox/
+- https://www.stackhero.io/en/services/Prometheus/documentations/Blackbox-Exporter
+- https://dev.to/chafroudtarek/part-1-how-to-set-up-grafana-and-prometheus-using-docker-i47
+- https://grafana.com/docs/grafana-cloud/send-data/metrics/metrics-prometheus/prometheus-config-examples/docker-compose-linux/
+- https://prometheus.io/docs/alerting/latest/configuration/
+- https://grafana.com/grafana/dashboards/1860-node-exporter-full/
+- https://prometheus.io/docs/guides/node-exporter/
+- https://pypi.org/project/prometheus-flask-exporter/
 
