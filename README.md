@@ -650,7 +650,66 @@ histogram_quantile(0.95, sum by (le) (rate(http_response_time_seconds_bucket{job
 ---
 ### 6. Create Dashboards
 
-To visualize metrics such as network stats and server resource utilization, create dashboards in Grafana.
+To visualize metrics such as network stats and server resource utilization, I've used the imported dashboard `Node Exporter Full` from grafana website and the second dashboard I created with promql queries.
+
+I've set up a custom Grafana dashboard to monitor my Flask application using the following PromQL queries. Additionally, I imported the **Node Exporter Full** dashboard to monitor host-level metrics comprehensively.
+
+#### Custom Dashboard Queries
+
+1. **CPU Usage node_exporter**
+   
+   *The CPU usage of the Flask app as measured over 30-second intervals.*
+   
+   ```promql
+   rate(process_cpu_seconds_total{job="node_exporter"}[30s])
+   ```
+
+2. **Successful Flask Requests Per Second**
+   
+   *Number of successful Flask requests per second, shown per path.*
+   
+   ```promql
+   rate(flask_http_request_duration_seconds_count{status="200"}[30s])
+   ```
+
+3. **Memory Usage Webapp**
+   
+   *The memory usage of the Flask app.*
+   
+   ```promql
+   process_resident_memory_bytes{job="webapp"}
+   ```
+
+4. **Errors Per Second**
+   
+   *Number of failed (non HTTP 200) responses per second.*
+   
+   ```promql
+   sum(rate(flask_http_request_duration_seconds_count{status!="200"}[30s]))
+   ```
+
+5. **Memory Usage node_exporter**
+   
+   *The memory usage of the host.*
+   
+   ```promql
+   process_resident_memory_bytes{job="node_exporter"}
+   ```
+
+6. **Total Requests Per Minute**
+   
+   *The total number of requests measured over one-minute intervals, shown per HTTP response status code.*
+   
+   ```promql
+   increase(flask_http_request_total[1m])
+   ```
+
+![image](https://github.com/user-attachments/assets/1e28765b-5c42-41a7-a0ee-f61dafa35597)
+
+
+#### Imported Node Exporter Full Dashboard
+
+In addition to my custom dashboard, I imported the **Node Exporter Full** dashboard from Grafana's [official dashboard repository](https://grafana.com/grafana/dashboards/1860-node-exporter-full/). This comprehensive dashboard provides in-depth insights into the host system's performance, including CPU, memory, disk, and network metrics. Integrating this dashboard alongside my custom panels ensures a holistic view of both application-specific and system-level metrics.
 
 1. **Import Existing Dashboard Templates:**
    - Go to **Create** > **Import** in Grafana.
