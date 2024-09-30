@@ -1,6 +1,6 @@
 terraform {
     backend "s3" {
-        bucket         = "terraform-backend-bucket-ioioio17"
+        bucket         = "terraform-backend-bucket-ioioio18"
         key            = "terraform/state.tfstate"  
         region         = "us-east-1"                
         encrypt        = true                     
